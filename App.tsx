@@ -34,6 +34,20 @@ function App() {
   useEffect(() => {
     setNotes(getNotes());
 
+    // Check URL for specific view (Simple Routing)
+    const handleRouting = () => {
+      const path = window.location.pathname;
+      const params = new URLSearchParams(window.location.search);
+
+      if (path === '/vendas' || params.get('view') === 'vendas') {
+        setView(AppView.SALES);
+      }
+    };
+    handleRouting();
+
+    // Listen for popstate events (back/forward button)
+    window.addEventListener('popstate', handleRouting);
+
     // Simulate Notification Check
     const checkNotification = () => {
       const hour = new Date().getHours();
@@ -42,6 +56,10 @@ function App() {
       }
     };
     checkNotification();
+
+    return () => {
+      window.removeEventListener('popstate', handleRouting);
+    };
   }, []);
 
   // Limpa o áudio ao mudar de devocional ou sair da tela
