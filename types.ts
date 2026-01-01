@@ -18,11 +18,20 @@ export interface Note {
   text: string;
 }
 
+export interface ChatMessage {
+  id: string;
+  text: string;
+  isUser: boolean;
+  timestamp: number;
+}
+
 export enum AppView {
   LANDING = 'LANDING',
+  SALES = 'SALES',
   DAILY = 'DAILY',
   TOPICS = 'TOPICS',
-  NOTES = 'NOTES'
+  NOTES = 'NOTES',
+  CHAT = 'CHAT'
 }
 
 export const TOPICS_LIST = [

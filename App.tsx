@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BookOpen, Heart, PenLine, ChevronRight, Share2, ArrowLeft, Sun, Copy, Home, RefreshCw, ExternalLink, PlayCircle, PauseCircle, Loader2 } from 'lucide-react';
-import { DevotionalContent, AppView, TOPICS_LIST, Note } from './types';
+import { BookOpen, Heart, PenLine, ChevronRight, Share2, ArrowLeft, Sun, Copy, Home, RefreshCw, ExternalLink, PlayCircle, PauseCircle, Loader2, MessageCircle, Send, ShoppingCart } from 'lucide-react';
+import { DevotionalContent, AppView, TOPICS_LIST, Note, ChatMessage } from './types';
 import { generateDevotional } from './services/geminiService';
 import { generateAudio, generateAudioBlob } from './services/elevenLabsService';
 import { getDailyDevotional, saveDailyDevotional, saveNote, getNotes, deleteNote } from './services/storageService';
 import { getDailyDevotionalFromSupabase, saveDailyDevotionalToSupabase, uploadAudioToSupabase } from './services/supabaseService';
+import { sendChatMessage } from './services/biblicalChatService';
 import { LoadingBook } from './components/LoadingBook';
 import { NotificationRequest } from './components/NotificationRequest';
+import { SalesLanding } from './components/SalesLanding';
 
 function App() {
   const [view, setView] = useState<AppView>(AppView.LANDING);
@@ -15,6 +17,12 @@ function App() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [noteInput, setNoteInput] = useState('');
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
+
+  // Chat States
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement | null>(null);
 
   // Audio States
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -208,6 +216,45 @@ function App() {
     }
   };
 
+  const handleSendChatMessage = async () => {
+    if (!chatInput.trim() || isChatLoading) return;
+
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      text: chatInput.trim(),
+      isUser: true,
+      timestamp: Date.now()
+    };
+
+    setChatMessages(prev => [...prev, userMessage]);
+    setChatInput('');
+    setIsChatLoading(true);
+
+    try {
+      const response = await sendChatMessage(userMessage.text, chatMessages);
+
+      const aiMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        text: response,
+        isUser: false,
+        timestamp: Date.now()
+      };
+
+      setChatMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Erro ao enviar mensagem:', error);
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
+
+  // Auto-scroll chat to bottom
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages]);
+
   const handleToggleAudio = async () => {
     if (!currentDevotional) return;
 
@@ -292,6 +339,14 @@ function App() {
           >
             <Heart size={20} className="text-pink-300" />
             <span>Escolher Tema</span>
+          </button>
+
+          <button
+            onClick={() => setView(AppView.CHAT)}
+            className="w-full bg-gradient-to-r from-amber-900/30 to-amber-800/30 backdrop-blur-md border border-amber-400/40 text-amber-50 font-serif text-lg py-4 rounded-full hover:from-amber-900/40 hover:to-amber-800/40 transition-all duration-300 flex items-center justify-center gap-3"
+          >
+            <MessageCircle size={20} className="text-amber-200" />
+            <span>Conversar com GPT Bíblico</span>
           </button>
         </div>
       </div>
@@ -499,9 +554,97 @@ function App() {
     </div>
   );
 
+  const renderChatView = () => (
+    <div className="pb-32 animate-fadeIn flex flex-col h-[calc(100vh-180px)]">
+      <div className="mb-6">
+        <h2 className="font-serif text-3xl text-ink font-bold mb-2">GPT Bíblico</h2>
+        <p className="text-warmGray text-sm">Converse com a IA sobre a Palavra de Deus. Peça conselhos, orientação ou tire dúvidas sobre a Bíblia.</p>
+      </div>
+
+      {/* Chat Messages Area */}
+      <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
+        {chatMessages.length === 0 ? (
+          <div className="text-center py-12 border-2 border-dashed border-goldLight/50 rounded-xl">
+            <MessageCircle size={48} className="mx-auto text-goldLight mb-4" />
+            <p className="text-warmGray mb-2">Comece uma conversa</p>
+            <p className="text-sm text-gold">Pergunte algo sobre a Bíblia ou peça um conselho espiritual</p>
+            <div className="mt-6 space-y-2 text-left max-w-xs mx-auto">
+              <p className="text-xs text-warmGray italic">💡 Exemplos:</p>
+              <p className="text-xs text-ink bg-white p-2 rounded border border-goldLight">"Como lidar com a ansiedade segundo a Bíblia?"</p>
+              <p className="text-xs text-ink bg-white p-2 rounded border border-goldLight">"O que a Bíblia diz sobre perdão?"</p>
+            </div>
+          </div>
+        ) : (
+          chatMessages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
+            >
+              <div
+                className={`max-w-[80%] p-4 rounded-2xl ${message.isUser
+                  ? 'bg-gradient-to-br from-amber-900 to-amber-800 text-white'
+                  : 'bg-white border border-goldLight text-ink'
+                  }`}
+              >
+                {!message.isUser && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <MessageCircle size={16} className="text-gold" />
+                    <span className="text-xs font-bold text-gold uppercase tracking-wider">GPT Bíblico</span>
+                  </div>
+                )}
+                <p className="font-body text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
+                <span className={`text-[10px] mt-2 block ${message.isUser ? 'text-orange-200' : 'text-warmGray'}`}>
+                  {new Date(message.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+            </div>
+          ))
+        )}
+        {isChatLoading && (
+          <div className="flex justify-start">
+            <div className="bg-white border border-goldLight p-4 rounded-2xl">
+              <div className="flex items-center gap-2">
+                <Loader2 size={16} className="animate-spin text-gold" />
+                <span className="text-sm text-warmGray">Pensando...</span>
+              </div>
+            </div>
+          </div>
+        )}
+        <div ref={chatEndRef} />
+      </div>
+
+      {/* Chat Input Area */}
+      <div className="sticky bottom-20 bg-paper pt-4 border-t border-goldLight">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSendChatMessage()}
+            placeholder="Digite sua pergunta..."
+            disabled={isChatLoading}
+            className="flex-1 px-4 py-3 rounded-full bg-white border border-goldLight focus:border-gold outline-none font-body text-ink disabled:opacity-50"
+          />
+          <button
+            onClick={handleSendChatMessage}
+            disabled={!chatInput.trim() || isChatLoading}
+            className="bg-gold text-white p-3 rounded-full hover:bg-amber-600 transition shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Send size={20} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   // Se estiver na Landing, renderiza sem navegação
   if (view === AppView.LANDING) {
     return renderLandingView();
+  }
+
+  // Se estiver na Sales, renderiza a landing page de vendas
+  if (view === AppView.SALES) {
+    return <SalesLanding />;
   }
 
   // Layout Principal (Leitura, Temas, Notas)
@@ -531,6 +674,7 @@ function App() {
         {view === AppView.DAILY && renderReadingView()}
         {view === AppView.TOPICS && renderTopicsView()}
         {view === AppView.NOTES && renderNotesView()}
+        {view === AppView.CHAT && renderChatView()}
       </main>
 
       {/* Bottom Nav */}
@@ -562,6 +706,14 @@ function App() {
           >
             <PenLine size={24} strokeWidth={view === AppView.NOTES ? 2.5 : 1.5} />
             <span className={`text-[10px] font-bold mt-1 uppercase tracking-wider ${view === AppView.NOTES ? 'opacity-100' : 'opacity-70'}`}>Diário</span>
+          </button>
+
+          <button
+            onClick={() => setView(AppView.CHAT)}
+            className={`flex flex-col items-center p-3 rounded-xl transition-all duration-300 w-20 ${view === AppView.CHAT ? 'text-amber-900 -translate-y-1' : 'text-warmGray hover:text-amber-700'}`}
+          >
+            <MessageCircle size={24} strokeWidth={view === AppView.CHAT ? 2.5 : 1.5} />
+            <span className={`text-[10px] font-bold mt-1 uppercase tracking-wider ${view === AppView.CHAT ? 'opacity-100' : 'opacity-70'}`}>Chat</span>
           </button>
         </div>
       </nav>
