@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type, Schema } from "@google/genai";
+import { GoogleGenAI, Type, Schema, HarmCategory, HarmBlockThreshold } from "@google/genai";
 import { API_KEY, SYSTEM_INSTRUCTION } from "../constants";
 import { DevotionalContent } from "../types";
 
@@ -23,29 +23,45 @@ export const generateDevotional = async (topic?: string): Promise<DevotionalCont
       : `Gere o devocional do dia de hoje. Algo inspirador para começar ou terminar o dia.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview", // Efficient for text generation
+      model: "gemini-3-flash-preview", 
       contents: prompt,
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: "application/json",
         responseSchema: devotionalSchema,
-        temperature: 0.7, // Creativity balanced with coherence
+        temperature: 0.7,
+        // Desativar filtros de segurança rigorosos para permitir textos religiosos/emocionais sem bloqueio indevido
+        safetySettings: [
+          { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+          { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+          { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+          { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        ],
       },
     });
 
-    if (response.text) {
-      return JSON.parse(response.text) as DevotionalContent;
+    // Tratamento robusto da resposta
+    let jsonString = response.text;
+    
+    if (!jsonString) {
+      throw new Error("Resposta vazia da IA");
     }
-    throw new Error("Resposta vazia da IA");
+
+    // Remove formatação markdown se houver (```json ... ```)
+    jsonString = jsonString.replace(/```json/g, '').replace(/```/g, '').trim();
+
+    return JSON.parse(jsonString) as DevotionalContent;
+
   } catch (error) {
     console.error("Erro ao gerar devocional:", error);
-    // Fallback safe content in case of API failure/quota
+    
+    // Fallback amigável em caso de erro
     return {
-      title: "Paz em meio à tempestade",
-      verse: "João 14:27",
-      reflection: "Houve um erro ao conectar com o servidor. Mas lembre-se: A paz de Deus excede todo entendimento. Respire fundo, feche os olhos e saiba que Ele está no controle, mesmo quando a tecnologia falha.",
-      application: "Tire 5 minutos de silêncio agora.",
-      prayer: "Senhor, acalma meu coração."
+      title: "Deus está no Controle",
+      verse: "Isaías 41:10",
+      reflection: "Neste momento, talvez a conexão tenha falhado, mas a conexão com Deus nunca cai. Ele diz: 'Não temas, porque eu sou contigo; não te assombres, porque eu sou o teu Deus; eu te fortaleço, e te ajudo, e te sustento com a destra da minha justiça.' Respire fundo e sinta essa paz agora.",
+      application: "Tire um momento de silêncio e repita o versículo em voz alta.",
+      prayer: "Senhor, mesmo quando as coisas não funcionam como esperado, eu confio em Ti. Amém."
     };
   }
 };
