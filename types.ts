@@ -42,5 +42,10 @@ export const TOPICS_LIST = [
   "Descanso",
   "Gratidão",
   "Perdão",
-  "Confiança em Deus"
+  "Confiança em Deus",
+  "Relacionamentos",
+  "Autoestima & Identidade",
+  "Luto & Consolo",
+  "Cansaço Mental",
+  "Sabedoria nas Decisões"
 ];
