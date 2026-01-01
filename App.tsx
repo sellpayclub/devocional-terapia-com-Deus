@@ -555,23 +555,34 @@ function App() {
   );
 
   const renderChatView = () => (
-    <div className="pb-32 animate-fadeIn flex flex-col h-[calc(100vh-180px)]">
-      <div className="mb-6">
-        <h2 className="font-serif text-3xl text-ink font-bold mb-2">GPT Bíblico</h2>
-        <p className="text-warmGray text-sm">Converse com a IA sobre a Palavra de Deus. Peça conselhos, orientação ou tire dúvidas sobre a Bíblia.</p>
+    <div className="animate-fadeIn flex flex-col h-[calc(100vh-120px)]">
+      {/* Header - Compacto */}
+      <div className="mb-4 pb-4 border-b border-goldLight/50">
+        <h2 className="font-serif text-2xl text-ink font-bold mb-1">GPT Bíblico</h2>
+        <p className="text-warmGray text-xs">Converse com a IA sobre a Palavra de Deus</p>
       </div>
 
-      {/* Chat Messages Area */}
-      <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
+      {/* Chat Messages Area - Expandido */}
+      <div className="flex-1 overflow-y-auto space-y-4 pr-2 mb-4">
         {chatMessages.length === 0 ? (
-          <div className="text-center py-12 border-2 border-dashed border-goldLight/50 rounded-xl">
+          <div className="text-center py-8 border-2 border-dashed border-goldLight/50 rounded-xl">
             <MessageCircle size={48} className="mx-auto text-goldLight mb-4" />
             <p className="text-warmGray mb-2">Comece uma conversa</p>
-            <p className="text-sm text-gold">Pergunte algo sobre a Bíblia ou peça um conselho espiritual</p>
-            <div className="mt-6 space-y-2 text-left max-w-xs mx-auto">
+            <p className="text-sm text-gold mb-4">Pergunte algo sobre a Bíblia ou peça um conselho espiritual</p>
+            <div className="mt-4 space-y-2 text-left max-w-xs mx-auto">
               <p className="text-xs text-warmGray italic">💡 Exemplos:</p>
-              <p className="text-xs text-ink bg-white p-2 rounded border border-goldLight">"Como lidar com a ansiedade segundo a Bíblia?"</p>
-              <p className="text-xs text-ink bg-white p-2 rounded border border-goldLight">"O que a Bíblia diz sobre perdão?"</p>
+              <button
+                onClick={() => setChatInput("Como lidar com a ansiedade segundo a Bíblia?")}
+                className="w-full text-xs text-ink bg-white p-3 rounded-lg border border-goldLight hover:border-gold hover:shadow-sm transition text-left"
+              >
+                "Como lidar com a ansiedade segundo a Bíblia?"
+              </button>
+              <button
+                onClick={() => setChatInput("O que a Bíblia diz sobre perdão?")}
+                className="w-full text-xs text-ink bg-white p-3 rounded-lg border border-goldLight hover:border-gold hover:shadow-sm transition text-left"
+              >
+                "O que a Bíblia diz sobre perdão?"
+              </button>
             </div>
           </div>
         ) : (
@@ -581,7 +592,7 @@ function App() {
               className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[80%] p-4 rounded-2xl ${message.isUser
+                className={`max-w-[85%] p-4 rounded-2xl shadow-sm ${message.isUser
                   ? 'bg-gradient-to-br from-amber-900 to-amber-800 text-white'
                   : 'bg-white border border-goldLight text-ink'
                   }`}
@@ -602,7 +613,7 @@ function App() {
         )}
         {isChatLoading && (
           <div className="flex justify-start">
-            <div className="bg-white border border-goldLight p-4 rounded-2xl">
+            <div className="bg-white border border-goldLight p-4 rounded-2xl shadow-sm">
               <div className="flex items-center gap-2">
                 <Loader2 size={16} className="animate-spin text-gold" />
                 <span className="text-sm text-warmGray">Pensando...</span>
@@ -613,24 +624,25 @@ function App() {
         <div ref={chatEndRef} />
       </div>
 
-      {/* Chat Input Area */}
-      <div className="sticky bottom-20 bg-paper pt-4 border-t border-goldLight">
-        <div className="flex gap-2">
+      {/* Chat Input Area - Fixo na parte inferior */}
+      <div className="sticky bottom-0 bg-paper pt-4 pb-2 border-t-2 border-goldLight shadow-lg">
+        <div className="flex gap-3">
           <input
             type="text"
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSendChatMessage()}
-            placeholder="Digite sua pergunta..."
+            onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendChatMessage()}
+            placeholder="Digite sua pergunta sobre a Bíblia..."
             disabled={isChatLoading}
-            className="flex-1 px-4 py-3 rounded-full bg-white border border-goldLight focus:border-gold outline-none font-body text-ink disabled:opacity-50"
+            className="flex-1 px-5 py-4 rounded-2xl bg-white border-2 border-goldLight focus:border-gold outline-none font-body text-ink disabled:opacity-50 shadow-sm transition-all"
           />
           <button
             onClick={handleSendChatMessage}
             disabled={!chatInput.trim() || isChatLoading}
-            className="bg-gold text-white p-3 rounded-full hover:bg-amber-600 transition shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-gradient-to-br from-amber-900 to-amber-800 text-white px-6 py-4 rounded-2xl hover:from-amber-800 hover:to-amber-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-bold"
           >
             <Send size={20} />
+            <span className="hidden sm:inline">Enviar</span>
           </button>
         </div>
       </div>

@@ -8,14 +8,27 @@ interface FAQItem {
 
 export const SalesLanding: React.FC = () => {
     const [openFAQ, setOpenFAQ] = useState<number | null>(null);
+    const [currentSlide, setCurrentSlide] = useState(0);
 
     const testimonialImages = [
         '/images/testimonials/customer-1.jpg',
         '/images/testimonials/customer-2.jpg',
         '/images/testimonials/customer-3.jpg',
         '/images/testimonials/customer-4.jpg',
-        '/images/testimonials/customer-5.jpg'
+        '/images/testimonials/customer-5.jpg',
+        '/images/testimonials/customer-6.jpg',
+        '/images/testimonials/customer-7.jpg',
+        '/images/testimonials/customer-8.jpg'
     ];
+
+    // Auto-play do carrossel
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentSlide((prev) => (prev + 1) % testimonialImages.length);
+        }, 3500); // Muda a cada 3.5 segundos
+
+        return () => clearInterval(interval);
+    }, [testimonialImages.length]);
 
     const faqs: FAQItem[] = [
         {
