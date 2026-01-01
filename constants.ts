@@ -1,6 +1,14 @@
 // In a real production app, use strict environment variables.
 // For the purpose of this request and Vercel compatibility:
-export const API_KEY = process.env.REACT_APP_GEMINI_API_KEY || "AIzaSyAtnZ2mBww8qT0efwJBzPqWRdNU-V-ddyQ";
+// Safely check for process to avoid crashing in browser environments
+const getEnvVar = (key: string, fallback: string) => {
+  if (typeof process !== 'undefined' && process.env && process.env[key]) {
+    return process.env[key];
+  }
+  return fallback;
+};
+
+export const API_KEY = getEnvVar("REACT_APP_GEMINI_API_KEY", "AIzaSyAtnZ2mBww8qT0efwJBzPqWRdNU-V-ddyQ");
 
 export const STORAGE_KEYS = {
   DAILY_DEVOTIONAL: 'devotional_daily_v1',
