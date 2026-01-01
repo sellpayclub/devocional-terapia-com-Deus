@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { BookOpen, Heart, PenLine, ChevronRight, Share2, ArrowLeft, Sun, Copy, Home, RefreshCw, ExternalLink } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { BookOpen, Heart, PenLine, ChevronRight, Share2, ArrowLeft, Sun, Copy, Home, RefreshCw, ExternalLink, PlayCircle, PauseCircle, Loader2 } from 'lucide-react';
 import { DevotionalContent, AppView, TOPICS_LIST, Note } from './types';
 import { generateDevotional } from './services/geminiService';
+import { generateAudio } from './services/elevenLabsService';
 import { getDailyDevotional, saveDailyDevotional, saveNote, getNotes, deleteNote } from './services/storageService';
 import { LoadingBook } from './components/LoadingBook';
 import { NotificationRequest } from './components/NotificationRequest';
@@ -13,6 +14,12 @@ function App() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [noteInput, setNoteInput] = useState('');
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
+
+  // Audio States
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [isAudioLoading, setIsAudioLoading] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Initial Load
   useEffect(() => {
@@ -28,6 +35,20 @@ function App() {
     checkNotification();
   }, []);
 
+  // Limpa o áudio ao mudar de devocional ou sair da tela
+  useEffect(() => {
+    stopAudio();
+    return () => stopAudio();
+  }, [currentDevotional, view]);
+
+  const stopAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setIsPlaying(false);
+  };
+
   const loadDaily = async (forceRefresh = false) => {
     setActiveTopic(null);
     const cached = getDailyDevotional();
@@ -36,10 +57,12 @@ function App() {
     // IMPORTANTE: Se o cache for um "Fallback" antigo (erro salvo incorretamente), ignoramos e tentamos de novo.
     if (cached && !forceRefresh && !cached.isFallback) {
       setCurrentDevotional(cached);
+      setAudioUrl(null); // Reset audio for new content
       setLoading(false);
     } else {
       setLoading(true);
       setCurrentDevotional(null); // Limpa para garantir que o Spinner apareça
+      setAudioUrl(null);
       
       // Gera conteúdo novo
       const fresh = await generateDevotional();
@@ -67,6 +90,7 @@ function App() {
   const handleTopicSelect = async (topic: string) => {
     setActiveTopic(topic);
     setCurrentDevotional(null);
+    setAudioUrl(null);
     setLoading(true);
     setView(AppView.DAILY);
     
@@ -102,6 +126,40 @@ function App() {
         // Fallback: Copiar para área de transferência
         navigator.clipboard.writeText(textToShare);
         alert("Devocional copiado para a área de transferência!");
+    }
+  };
+
+  const handleToggleAudio = async () => {
+    if (!currentDevotional) return;
+
+    // Se já tem áudio carregado, apenas toca/pausa
+    if (audioUrl) {
+      if (isPlaying) {
+        audioRef.current?.pause();
+        setIsPlaying(false);
+      } else {
+        audioRef.current?.play();
+        setIsPlaying(true);
+      }
+      return;
+    }
+
+    // Se não tem, gera
+    setIsAudioLoading(true);
+    try {
+      const url = await generateAudio(currentDevotional);
+      setAudioUrl(url);
+      // Pequeno delay para garantir que o elemento <audio> renderizou com a nova URL
+      setTimeout(() => {
+        if (audioRef.current) {
+          audioRef.current.play();
+          setIsPlaying(true);
+        }
+      }, 100);
+    } catch (e) {
+      alert("Não foi possível gerar o áudio agora.");
+    } finally {
+      setIsAudioLoading(false);
     }
   };
 
@@ -212,19 +270,56 @@ function App() {
             {currentDevotional.title}
           </h1>
           
-          <div className="inline-block border-y border-gold py-2 px-4 bg-orange-50/50 hover:bg-orange-100/50 transition-colors cursor-pointer group rounded-sm">
-            <a 
-              href={bibleUrl} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="font-serif italic text-lg text-amber-900 group-hover:text-amber-700 transition flex items-center justify-center gap-2"
-              title="Ler capítulo completo na Bíblia Online"
-            >
-              "{currentDevotional.verse}"
-              <ExternalLink size={14} className="opacity-0 group-hover:opacity-50 transition-opacity text-gold" />
-            </a>
+          <div className="flex flex-col items-center gap-4">
+            <div className="inline-block border-y border-gold py-2 px-4 bg-orange-50/50 hover:bg-orange-100/50 transition-colors cursor-pointer group rounded-sm">
+                <a 
+                href={bibleUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="font-serif italic text-lg text-amber-900 group-hover:text-amber-700 transition flex items-center justify-center gap-2"
+                title="Ler capítulo completo na Bíblia Online"
+                >
+                "{currentDevotional.verse}"
+                <ExternalLink size={14} className="opacity-0 group-hover:opacity-50 transition-opacity text-gold" />
+                </a>
+            </div>
+            
+            {/* AUDIO PLAYER */}
+            {!currentDevotional.isFallback && (
+              <div className="w-full max-w-xs">
+                <button
+                  onClick={handleToggleAudio}
+                  disabled={isAudioLoading}
+                  className={`w-full flex items-center justify-center gap-3 px-6 py-3 rounded-full transition-all duration-300 shadow-sm border
+                    ${isPlaying 
+                        ? 'bg-amber-100 border-amber-300 text-amber-900' 
+                        : 'bg-white border-goldLight text-ink hover:border-gold hover:shadow-md'
+                    }`}
+                >
+                    {isAudioLoading ? (
+                        <Loader2 size={24} className="animate-spin text-gold" />
+                    ) : isPlaying ? (
+                        <PauseCircle size={24} className="text-amber-700" fill="currentColor" fillOpacity={0.2} />
+                    ) : (
+                        <PlayCircle size={24} className="text-gold" />
+                    )}
+                    
+                    <span className="font-sans font-bold text-sm uppercase tracking-wide">
+                        {isAudioLoading ? "Gerando Áudio..." : isPlaying ? "Pausar Leitura" : "Ouvir Devocional"}
+                    </span>
+                </button>
+                {/* Elemento de áudio invisível */}
+                {audioUrl && (
+                    <audio 
+                        ref={audioRef} 
+                        src={audioUrl} 
+                        onEnded={() => setIsPlaying(false)}
+                        className="hidden" 
+                    />
+                )}
+              </div>
+            )}
           </div>
-          <p className="text-[10px] text-warmGray mt-1 tracking-wide opacity-0 hover:opacity-100 transition-opacity">Toque para ler o contexto</p>
         </header>
 
         <article className="prose prose-lg prose-p:font-body prose-p:text-ink prose-p:leading-relaxed max-w-none">

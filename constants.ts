@@ -16,6 +16,10 @@ const k2 = "DjNWOdQMEsb25bNSihBERrPOMgTET3BlbkFJx5Mb0uwog9oOqpUh1z5HZM5SX0GwspBx
 // Chave OpenAI atualizada e concatenada
 export const API_KEY = getEnvVar("REACT_APP_OPENAI_API_KEY", k1 + k2);
 
+// ElevenLabs Config
+export const ELEVEN_LABS_API_KEY = "sk_ca211f065b1833b1d46cf633dcafc137e84d454328f8aaf0";
+export const ELEVEN_LABS_VOICE_ID = "33B4UnXyTNbgLmdEDh5P"; // Voz doce feminina
+
 export const STORAGE_KEYS = {
   DAILY_DEVOTIONAL: 'devotional_daily_v1',
   NOTES: 'devotional_notes_v1',
