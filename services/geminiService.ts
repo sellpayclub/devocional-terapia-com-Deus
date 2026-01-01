@@ -9,24 +9,35 @@ const openai = new OpenAI({
   dangerouslyAllowBrowser: true 
 });
 
+// Tempo máximo de espera para a IA responder (15 segundos)
+const TIMEOUT_MS = 15000;
+
 export const generateDevotional = async (topic?: string): Promise<DevotionalContent> => {
   console.log("✝️ Iniciando geração de devocional...");
-  console.log("🤖 Motor de IA: OpenAI (GPT-4o-mini)");
   
   try {
     const userPrompt = topic 
       ? `Gere um devocional específico sobre o tema: ${topic}.` 
       : `Gere o devocional do dia de hoje. Algo inspirador para começar ou terminar o dia.`;
 
-    const completion = await openai.chat.completions.create({
+    // Promessa da API
+    const fetchPromise = openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         { role: "system", content: SYSTEM_INSTRUCTION },
         { role: "user", content: userPrompt }
       ],
-      response_format: { type: "json_object" }, // Garante JSON perfeito
+      response_format: { type: "json_object" },
       temperature: 0.7,
     });
+
+    // Promessa de Timeout
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("Timeout: A conexão demorou muito.")), TIMEOUT_MS)
+    );
+
+    // Corrida: quem terminar primeiro ganha. Se o timeout ganhar, lança erro.
+    const completion: any = await Promise.race([fetchPromise, timeoutPromise]);
 
     const contentString = completion.choices[0].message.content;
 
@@ -40,19 +51,20 @@ export const generateDevotional = async (topic?: string): Promise<DevotionalCont
   } catch (error: any) {
     console.error("❌ Erro ao gerar com OpenAI:", error);
     
-    let errorMessage = "Erro desconhecido.";
+    let errorMessage = "Erro de conexão.";
     if (error.message) errorMessage = error.message;
-    if (error.status === 401) errorMessage = "Chave de API inválida (401).";
-    if (error.status === 429) errorMessage = "Limite de conta ou saldo excedido (429).";
-    if (error.status === 500) errorMessage = "Erro no servidor da OpenAI (500).";
+    if (error.status === 401) errorMessage = "Chave de API inválida.";
+    if (error.status === 429) errorMessage = "Muitos acessos. Tente mais tarde.";
+    if (error.status === 500) errorMessage = "Erro no servidor da IA.";
 
-    // Fallback amigável
+    // Fallback amigável - Este objeto tem a flag isFallback: true
+    // O App.tsx vai detectar isso e permitir tentar de novo.
     return {
       title: "Deus está no Controle",
-      verse: "Isaías 41:10",
-      reflection: `(Nota Técnica: Ocorreu um erro na conexão com a OpenAI: ${errorMessage}. Tente novamente mais tarde).\n\nNeste momento, talvez a conexão tenha falhado, mas a conexão com Deus nunca cai. Ele diz: 'Não temas, porque eu sou contigo; não te assombres, porque eu sou o teu Deus; eu te fortaleço, e te ajudo, e te sustento com a destra da minha justiça.' Respire fundo e sinta essa paz agora.`,
-      application: "Tire um momento de silêncio e repita o versículo em voz alta.",
-      prayer: "Senhor, mesmo quando as coisas não funcionam como esperado, eu confio em Ti. Amém.",
+      verse: "Salmos 46:1",
+      reflection: `(Não conseguimos gerar o devocional novo agora devido a: ${errorMessage}. Clique em 'Tentar Novamente' acima).\n\nEnquanto isso, lembre-se: Deus é o nosso refúgio e fortaleza, socorro bem presente na angústia. Mesmo quando a tecnologia falha ou o dia parece confuso, a paz de Deus permanece acessível a nós através de uma simples oração. Respire fundo e confie.`,
+      application: "Tente atualizar a página ou clicar no botão de recarregar.",
+      prayer: "Senhor, acalma meu coração e renova minhas forças. Amém.",
       isFallback: true
     } as DevotionalContent;
   }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Heart, PenLine, ChevronRight, Share2, ArrowLeft, Sun, Copy, Home, RefreshCw } from 'lucide-react';
+import { BookOpen, Heart, PenLine, ChevronRight, Share2, ArrowLeft, Sun, Copy, Home, RefreshCw, ExternalLink } from 'lucide-react';
 import { DevotionalContent, AppView, TOPICS_LIST, Note } from './types';
 import { generateDevotional } from './services/geminiService';
 import { getDailyDevotional, saveDailyDevotional, saveNote, getNotes, deleteNote } from './services/storageService';
@@ -33,16 +33,19 @@ function App() {
     const cached = getDailyDevotional();
     
     // Se existe cache e não estamos forçando, usa o cache.
-    // MAS, se o cache for um "Fallback" (erro), a gente ignora e tenta gerar de novo.
+    // IMPORTANTE: Se o cache for um "Fallback" antigo (erro salvo incorretamente), ignoramos e tentamos de novo.
     if (cached && !forceRefresh && !cached.isFallback) {
       setCurrentDevotional(cached);
       setLoading(false);
     } else {
       setLoading(true);
-      setCurrentDevotional(null); // Limpa para mostrar loading
+      setCurrentDevotional(null); // Limpa para garantir que o Spinner apareça
+      
+      // Gera conteúdo novo
       const fresh = await generateDevotional();
       
-      // Só salva no cache se NÃO for um erro (fallback)
+      // Só salva no localStorage se for SUCESSO.
+      // Se for erro (fallback), não salvamos, permitindo que o usuário tente de novo infinitamente.
       if (!fresh.isFallback) {
         saveDailyDevotional(fresh);
       }
@@ -66,8 +69,7 @@ function App() {
     setCurrentDevotional(null);
     setLoading(true);
     setView(AppView.DAILY);
-    // Tópicos sempre geram novos pois são sob demanda,
-    // mas não salvam no slot "Daily" do localStorage
+    
     const fresh = await generateDevotional(topic);
     setCurrentDevotional(fresh);
     setLoading(false);
@@ -166,7 +168,12 @@ function App() {
   const renderReadingView = () => {
     // Show loading if state is loading OR if we are in daily view but have no content yet
     if (loading) return <LoadingBook />;
+    
+    // Se não estiver carregando e não tiver conteúdo (raro), mostra mensagem padrão
     if (!currentDevotional) return <div className="p-10 text-center text-warmGray">Carregando...</div>;
+
+    // Gera o link para o BibleGateway
+    const bibleUrl = `https://www.biblegateway.com/passage/?search=${encodeURIComponent(currentDevotional.verse)}&version=NVI-PT`;
 
     return (
       <div className="animate-fadeIn pb-24">
@@ -179,15 +186,20 @@ function App() {
           </button>
         )}
 
-        {/* Botão de Tentar Novamente se for erro */}
+        {/* --- ÁREA DE TRATAMENTO DE ERRO --- */}
+        {/* Se for Fallback, mostramos um aviso destacado e o botão de tentar de novo */}
         {currentDevotional.isFallback && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-center">
-             <p className="text-red-700 text-sm mb-2">Houve um problema ao conectar com a IA.</p>
+          <div className="bg-red-50 border-2 border-red-100 rounded-xl p-6 mb-8 text-center shadow-sm animate-pulse">
+             <h3 className="text-red-800 font-bold mb-2">Falha na conexão</h3>
+             <p className="text-red-700/80 text-sm mb-4">
+               Não foi possível gerar o devocional fresquinho agora. Verifique sua internet.
+             </p>
              <button 
-                onClick={() => loadDaily(true)}
-                className="bg-red-100 text-red-800 px-4 py-2 rounded-full text-sm font-bold flex items-center justify-center gap-2 mx-auto hover:bg-red-200 transition"
+                onClick={() => loadDaily(true)} // Força o refresh ao clicar
+                className="w-full bg-red-100 hover:bg-red-200 text-red-800 py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-colors"
              >
-                <RefreshCw size={16} /> Tentar Novamente
+                <RefreshCw size={18} className="animate-spin-slow" /> 
+                Tentar Gerar Novamente
              </button>
           </div>
         )}
@@ -199,11 +211,20 @@ function App() {
           <h1 className="font-serif text-3xl md:text-4xl text-ink font-bold leading-tight mb-4">
             {currentDevotional.title}
           </h1>
-          <div className="inline-block border-y border-gold py-2 px-4 bg-orange-50/50">
-            <p className="font-serif italic text-lg text-amber-900">
+          
+          <div className="inline-block border-y border-gold py-2 px-4 bg-orange-50/50 hover:bg-orange-100/50 transition-colors cursor-pointer group rounded-sm">
+            <a 
+              href={bibleUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="font-serif italic text-lg text-amber-900 group-hover:text-amber-700 transition flex items-center justify-center gap-2"
+              title="Ler capítulo completo na Bíblia Online"
+            >
               "{currentDevotional.verse}"
-            </p>
+              <ExternalLink size={14} className="opacity-0 group-hover:opacity-50 transition-opacity text-gold" />
+            </a>
           </div>
+          <p className="text-[10px] text-warmGray mt-1 tracking-wide opacity-0 hover:opacity-100 transition-opacity">Toque para ler o contexto</p>
         </header>
 
         <article className="prose prose-lg prose-p:font-body prose-p:text-ink prose-p:leading-relaxed max-w-none">
