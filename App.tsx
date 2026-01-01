@@ -111,19 +111,12 @@ function App() {
       {/* Background Image Layer with Overlay */}
       <div className="absolute inset-0 z-0">
         <img 
-          src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073&auto=format&fit=crop" 
-          alt="Sunset" 
+          src="https://i.postimg.cc/MGNXmP1D/fundo-devocional.png" 
+          alt="Sunset Background" 
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-amber-900/90 via-amber-900/40 to-orange-500/30 mix-blend-multiply" />
         <div className="absolute inset-0 bg-black/20" />
-      </div>
-
-      {/* Decorative Dove/Bird */}
-      <div className="absolute top-10 left-10 z-10 opacity-80">
-         <svg width="60" height="60" viewBox="0 0 24 24" fill="white" className="drop-shadow-lg">
-            <path d="M12 2C12 2 14 5 16 8C18 11 20 14 20 18C20 20.2 18.2 22 16 22C13.8 22 12 20.2 12 18C12 20.2 10.2 22 8 22C5.8 22 4 20.2 4 18C4 14 6 11 8 8C10 5 12 2 12 2Z" fillOpacity="0.8"/>
-         </svg>
       </div>
 
       <div className="z-10 w-full flex-1 flex flex-col items-center justify-center px-6 text-center pt-20">
