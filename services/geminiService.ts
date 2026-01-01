@@ -1,67 +1,59 @@
-import { GoogleGenAI, Type, Schema, HarmCategory, HarmBlockThreshold } from "@google/genai";
+import OpenAI from "openai";
 import { API_KEY, SYSTEM_INSTRUCTION } from "../constants";
 import { DevotionalContent } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: API_KEY });
-
-const devotionalSchema: Schema = {
-  type: Type.OBJECT,
-  properties: {
-    title: { type: Type.STRING },
-    verse: { type: Type.STRING },
-    reflection: { type: Type.STRING },
-    application: { type: Type.STRING },
-    prayer: { type: Type.STRING },
-  },
-  required: ["title", "verse", "reflection", "application", "prayer"],
-};
+// Inicializa o cliente OpenAI
+// 'dangerouslyAllowBrowser: true' permite rodar direto no front-end (Vercel/Browser)
+const openai = new OpenAI({
+  apiKey: API_KEY,
+  dangerouslyAllowBrowser: true 
+});
 
 export const generateDevotional = async (topic?: string): Promise<DevotionalContent> => {
+  console.log("✝️ Iniciando geração de devocional...");
+  console.log("🤖 Motor de IA: OpenAI (GPT-4o-mini)");
+  
   try {
-    const prompt = topic 
+    const userPrompt = topic 
       ? `Gere um devocional específico sobre o tema: ${topic}.` 
       : `Gere o devocional do dia de hoje. Algo inspirador para começar ou terminar o dia.`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview", 
-      contents: prompt,
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        responseMimeType: "application/json",
-        responseSchema: devotionalSchema,
-        temperature: 0.7,
-        // Desativar filtros de segurança rigorosos para permitir textos religiosos/emocionais sem bloqueio indevido
-        safetySettings: [
-          { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-          { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-          { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-          { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-        ],
-      },
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: SYSTEM_INSTRUCTION },
+        { role: "user", content: userPrompt }
+      ],
+      response_format: { type: "json_object" }, // Garante JSON perfeito
+      temperature: 0.7,
     });
 
-    // Tratamento robusto da resposta
-    let jsonString = response.text;
-    
-    if (!jsonString) {
+    const contentString = completion.choices[0].message.content;
+
+    if (!contentString) {
       throw new Error("Resposta vazia da IA");
     }
 
-    // Remove formatação markdown se houver (```json ... ```)
-    jsonString = jsonString.replace(/```json/g, '').replace(/```/g, '').trim();
+    console.log("✅ Devocional gerado com sucesso!");
+    return JSON.parse(contentString) as DevotionalContent;
 
-    return JSON.parse(jsonString) as DevotionalContent;
-
-  } catch (error) {
-    console.error("Erro ao gerar devocional:", error);
+  } catch (error: any) {
+    console.error("❌ Erro ao gerar com OpenAI:", error);
     
-    // Fallback amigável em caso de erro
+    let errorMessage = "Erro desconhecido.";
+    if (error.message) errorMessage = error.message;
+    if (error.status === 401) errorMessage = "Chave de API inválida (401).";
+    if (error.status === 429) errorMessage = "Limite de conta ou saldo excedido (429).";
+    if (error.status === 500) errorMessage = "Erro no servidor da OpenAI (500).";
+
+    // Fallback amigável
     return {
       title: "Deus está no Controle",
       verse: "Isaías 41:10",
-      reflection: "Neste momento, talvez a conexão tenha falhado, mas a conexão com Deus nunca cai. Ele diz: 'Não temas, porque eu sou contigo; não te assombres, porque eu sou o teu Deus; eu te fortaleço, e te ajudo, e te sustento com a destra da minha justiça.' Respire fundo e sinta essa paz agora.",
+      reflection: `(Nota Técnica: Ocorreu um erro na conexão com a OpenAI: ${errorMessage}. Tente novamente mais tarde).\n\nNeste momento, talvez a conexão tenha falhado, mas a conexão com Deus nunca cai. Ele diz: 'Não temas, porque eu sou contigo; não te assombres, porque eu sou o teu Deus; eu te fortaleço, e te ajudo, e te sustento com a destra da minha justiça.' Respire fundo e sinta essa paz agora.`,
       application: "Tire um momento de silêncio e repita o versículo em voz alta.",
-      prayer: "Senhor, mesmo quando as coisas não funcionam como esperado, eu confio em Ti. Amém."
-    };
+      prayer: "Senhor, mesmo quando as coisas não funcionam como esperado, eu confio em Ti. Amém.",
+      isFallback: true
+    } as DevotionalContent;
   }
 };

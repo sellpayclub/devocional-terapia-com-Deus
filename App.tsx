@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Heart, PenLine, ChevronRight, Share2, ArrowLeft, Sun, Copy, Home } from 'lucide-react';
+import { BookOpen, Heart, PenLine, ChevronRight, Share2, ArrowLeft, Sun, Copy, Home, RefreshCw } from 'lucide-react';
 import { DevotionalContent, AppView, TOPICS_LIST, Note } from './types';
 import { generateDevotional } from './services/geminiService';
 import { getDailyDevotional, saveDailyDevotional, saveNote, getNotes, deleteNote } from './services/storageService';
@@ -28,19 +28,25 @@ function App() {
     checkNotification();
   }, []);
 
-  const loadDaily = async () => {
+  const loadDaily = async (forceRefresh = false) => {
     setActiveTopic(null);
     const cached = getDailyDevotional();
     
-    // LÓGICA RÍGIDA: Se existe cache para hoje, USA O CACHE.
-    // Não gera novo.
-    if (cached) {
+    // Se existe cache e não estamos forçando, usa o cache.
+    // MAS, se o cache for um "Fallback" (erro), a gente ignora e tenta gerar de novo.
+    if (cached && !forceRefresh && !cached.isFallback) {
       setCurrentDevotional(cached);
       setLoading(false);
     } else {
       setLoading(true);
+      setCurrentDevotional(null); // Limpa para mostrar loading
       const fresh = await generateDevotional();
-      saveDailyDevotional(fresh);
+      
+      // Só salva no cache se NÃO for um erro (fallback)
+      if (!fresh.isFallback) {
+        saveDailyDevotional(fresh);
+      }
+      
       setCurrentDevotional(fresh);
       setLoading(false);
     }
@@ -178,6 +184,19 @@ function App() {
           >
             <ArrowLeft size={16} className="mr-1" /> Voltar ao Dia
           </button>
+        )}
+
+        {/* Botão de Tentar Novamente se for erro */}
+        {currentDevotional.isFallback && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-center">
+             <p className="text-red-700 text-sm mb-2">Houve um problema ao conectar com a IA.</p>
+             <button 
+                onClick={() => loadDaily(true)}
+                className="bg-red-100 text-red-800 px-4 py-2 rounded-full text-sm font-bold flex items-center justify-center gap-2 mx-auto hover:bg-red-200 transition"
+             >
+                <RefreshCw size={16} /> Tentar Novamente
+             </button>
+          </div>
         )}
 
         <header className="mb-8 text-center border-b-2 border-goldLight pb-6">
@@ -332,7 +351,7 @@ function App() {
             <button 
                 onClick={() => {
                     setView(AppView.DAILY);
-                    // Importante: Se clicar em "Leitura", tenta carregar o dia atual do cache
+                    // Importante: Se clicar em "Leitura", tenta carregar o dia atual do cache se não estiver forçando
                     if(!activeTopic) loadDaily(); 
                 }}
                 className={`flex flex-col items-center p-3 rounded-xl transition-all duration-300 w-20 ${view === AppView.DAILY ? 'text-amber-900 -translate-y-1' : 'text-warmGray hover:text-amber-700'}`}

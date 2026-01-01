@@ -4,6 +4,7 @@ export interface DevotionalContent {
   reflection: string; // HTML or markdown string
   application: string;
   prayer: string;
+  isFallback?: boolean;
 }
 
 export interface StoredDevotional {
