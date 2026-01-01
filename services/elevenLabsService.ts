@@ -10,21 +10,29 @@ const cleanMarkdown = (text: string) => {
     .replace(/\n\n/g, ". "); // Troca quebras de linha duplas por ponto
 };
 
-export const generateAudio = async (content: DevotionalContent): Promise<string> => {
+// Monta o texto completo para ser lido
+const buildTextToRead = (content: DevotionalContent): string => {
+  return `
+    ${content.title}.
+    
+    Versículo de hoje: ${content.verse}.
+    
+    ${cleanMarkdown(content.reflection)}
+    
+    Aplicação prática: ${cleanMarkdown(content.application)}.
+    
+    Vamos orar? 
+    ${cleanMarkdown(content.prayer)}
+  `;
+};
+
+/**
+ * Gera áudio e retorna Blob (para upload no Supabase)
+ * Usado quando geramos o devocional compartilhado
+ */
+export const generateAudioBlob = async (content: DevotionalContent): Promise<Blob> => {
   try {
-    // Monta o texto completo para ser lido de forma fluida
-    const textToRead = `
-      ${content.title}.
-      
-      Versículo de hoje: ${content.verse}.
-      
-      ${cleanMarkdown(content.reflection)}
-      
-      Aplicação prática: ${cleanMarkdown(content.application)}.
-      
-      Vamos orar? 
-      ${cleanMarkdown(content.prayer)}
-    `;
+    const textToRead = buildTextToRead(content);
 
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${ELEVEN_LABS_VOICE_ID}`,
@@ -54,8 +62,24 @@ export const generateAudio = async (content: DevotionalContent): Promise<string>
       throw new Error("Falha ao gerar áudio");
     }
 
-    // Converte a resposta (blob de áudio) em uma URL tocável no browser
+    // Retorna o blob diretamente
     const blob = await response.blob();
+    return blob;
+
+  } catch (error) {
+    console.error("Erro no serviço de áudio:", error);
+    throw error;
+  }
+};
+
+/**
+ * Gera áudio e retorna URL local (para uso imediato no navegador)
+ * Usado para devocionais por tema (individuais)
+ */
+export const generateAudio = async (content: DevotionalContent): Promise<string> => {
+  try {
+    const blob = await generateAudioBlob(content);
+    // Converte a resposta (blob de áudio) em uma URL tocável no browser
     const audioUrl = URL.createObjectURL(blob);
     return audioUrl;
 

@@ -1,14 +1,23 @@
 import { STORAGE_KEYS } from "../constants";
 import { DevotionalContent, StoredDevotional, Note } from "../types";
 
+/**
+ * Retorna a data de hoje no formato YYYY-MM-DD no horário do Brasil (UTC-3)
+ */
+const getTodayBrazil = (): string => {
+  const now = new Date()
+  const brazilTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
+  return brazilTime.toISOString().split('T')[0]
+}
+
 export const getDailyDevotional = (): DevotionalContent | null => {
   const json = localStorage.getItem(STORAGE_KEYS.DAILY_DEVOTIONAL);
   if (!json) return null;
 
   try {
     const stored: StoredDevotional = JSON.parse(json);
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    
+    const today = getTodayBrazil();
+
     if (stored.date === today) {
       return stored.content;
     }
@@ -19,7 +28,7 @@ export const getDailyDevotional = (): DevotionalContent | null => {
 };
 
 export const saveDailyDevotional = (content: DevotionalContent) => {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayBrazil();
   const stored: StoredDevotional = { date: today, content };
   localStorage.setItem(STORAGE_KEYS.DAILY_DEVOTIONAL, JSON.stringify(stored));
 };

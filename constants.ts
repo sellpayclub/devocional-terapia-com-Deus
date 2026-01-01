@@ -8,17 +8,18 @@ const getEnvVar = (key: string, fallback: string) => {
   return fallback;
 };
 
-// Dividimos a chave em duas partes para evitar que o GitHub bloqueie o envio (push) por segurança.
-// O GitHub detecta chaves expostas e impede a atualização do código. Isso "engana" o verificador.
+// Usa variáveis de ambiente do Vite (.env.local)
+// Fallback para as chaves antigas caso não estejam configuradas
 const k1 = "sk-proj-VAbJbYfWqmPv5pyQRbEpHthfQ8pyTKiox7_mK8u8Xev2TY";
 const k2 = "DjNWOdQMEsb25bNSihBERrPOMgTET3BlbkFJx5Mb0uwog9oOqpUh1z5HZM5SX0GwspBx061AopzFlQczSQ3UUYuFJlXyFzgdd39qbJdIDW2EkA";
 
-// Chave OpenAI atualizada e concatenada
-export const API_KEY = getEnvVar("REACT_APP_OPENAI_API_KEY", k1 + k2);
+// Chaves de API - Prioriza .env.local
+export const API_KEY = import.meta.env.VITE_OPENAI_API_KEY || getEnvVar("REACT_APP_OPENAI_API_KEY", k1 + k2);
 
 // ElevenLabs Config
-export const ELEVEN_LABS_API_KEY = "sk_ca211f065b1833b1d46cf633dcafc137e84d454328f8aaf0";
-export const ELEVEN_LABS_VOICE_ID = "33B4UnXyTNbgLmdEDh5P"; // Voz doce feminina
+export const ELEVEN_LABS_API_KEY = import.meta.env.VITE_ELEVEN_LABS_API_KEY || "sk_ca211f065b1833b1d46cf633dcafc137e84d454328f8aaf0";
+export const ELEVEN_LABS_VOICE_ID = import.meta.env.VITE_ELEVEN_LABS_VOICE_ID || "33B4UnXyTNbgLmdEDh5P"; // Voz doce feminina
+
 
 export const STORAGE_KEYS = {
   DAILY_DEVOTIONAL: 'devotional_daily_v1',
