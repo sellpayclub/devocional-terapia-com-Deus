@@ -15,20 +15,25 @@ export const SalesLanding: React.FC = () => {
         '/images/testimonials/customer-2.jpg',
         '/images/testimonials/customer-3.jpg',
         '/images/testimonials/customer-4.jpg',
-        '/images/testimonials/customer-5.jpg',
-        '/images/testimonials/customer-6.jpg',
-        '/images/testimonials/customer-7.jpg',
-        '/images/testimonials/customer-8.jpg'
+        '/images/testimonials/customer-5.jpg'
     ];
 
     // Auto-play do carrossel
     useEffect(() => {
         const interval = setInterval(() => {
             setCurrentSlide((prev) => (prev + 1) % testimonialImages.length);
-        }, 3500); // Muda a cada 3.5 segundos
+        }, 5000); // Mais tempo para ler/ver (3.5s -> 5s)
 
         return () => clearInterval(interval);
     }, [testimonialImages.length]);
+
+    const nextSlide = () => {
+        setCurrentSlide((prev) => (prev + 1) % testimonialImages.length);
+    };
+
+    const prevSlide = () => {
+        setCurrentSlide((prev) => (prev - 1 + testimonialImages.length) % testimonialImages.length);
+    };
 
     const faqs: FAQItem[] = [
         {
@@ -196,13 +201,30 @@ export const SalesLanding: React.FC = () => {
 
                     {/* Carousel */}
                     <div className="relative max-w-2xl mx-auto">
-                        <div className="relative h-[500px] md:h-[600px] rounded-3xl overflow-hidden shadow-2xl">
+                        <div className="relative h-[500px] md:h-[600px] rounded-3xl overflow-hidden shadow-2xl group">
+                            {/* Navigation Buttons */}
+                            <button
+                                onClick={(e) => { e.stopPropagation(); prevSlide(); }}
+                                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
+                                aria-label="Anterior"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                            </button>
+
+                            <button
+                                onClick={(e) => { e.stopPropagation(); nextSlide(); }}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
+                                aria-label="Próximo"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+                            </button>
+
                             {testimonialImages.map((image, index) => (
                                 <div
                                     key={index}
-                                    className={`absolute inset-0 transition-all duration-1000 ease-in-out ${index === currentSlide
-                                        ? 'opacity-100 scale-100'
-                                        : 'opacity-0 scale-95'
+                                    className={`absolute inset-0 transition-all duration-700 ease-in-out ${index === currentSlide
+                                        ? 'opacity-100 translate-x-0'
+                                        : 'opacity-0 translate-x-8'
                                         }`}
                                 >
                                     <img

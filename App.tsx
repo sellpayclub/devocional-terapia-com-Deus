@@ -7,7 +7,7 @@ import { getDailyDevotional, saveDailyDevotional, saveNote, getNotes, deleteNote
 import { getDailyDevotionalFromSupabase, saveDailyDevotionalToSupabase, uploadAudioToSupabase } from './services/supabaseService';
 import { sendChatMessage } from './services/biblicalChatService';
 import { LoadingBook } from './components/LoadingBook';
-import { NotificationRequest } from './components/NotificationRequest';
+import { PWAInstallButton } from './components/PWAInstallButton';
 import { SalesLanding } from './components/SalesLanding';
 
 function App() {
@@ -47,15 +47,6 @@ function App() {
 
     // Listen for popstate events (back/forward button)
     window.addEventListener('popstate', handleRouting);
-
-    // Simulate Notification Check
-    const checkNotification = () => {
-      const hour = new Date().getHours();
-      if (hour === 8 && Notification.permission === 'granted') {
-        // Logic to trigger notification
-      }
-    };
-    checkNotification();
 
     return () => {
       window.removeEventListener('popstate', handleRouting);
@@ -680,7 +671,6 @@ function App() {
   // Layout Principal (Leitura, Temas, Notas)
   return (
     <div className="min-h-screen bg-paper selection:bg-goldLight selection:text-ink">
-      <NotificationRequest />
 
       {/* Top Bar */}
       <div className="sticky top-0 z-40 bg-paper/95 backdrop-blur border-b border-goldLight/50 px-6 py-4 flex justify-between items-center transition-all shadow-sm">
