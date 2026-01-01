@@ -1,0 +1,8 @@
+{
+  "name": "Devocional: Terapia com Deus",
+  "description": "365 Dias de encontro com Deus. Um devocional diário gerado por IA para acalmar o coração.",
+  "permissions": [
+    "notifications"
+  ],
+  "requestFramePermissions": []
+}
