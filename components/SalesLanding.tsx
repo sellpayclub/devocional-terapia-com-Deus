@@ -8,6 +8,14 @@ interface FAQItem {
 
 export const SalesLanding: React.FC = () => {
     const [openFAQ, setOpenFAQ] = useState<number | null>(null);
+
+    // Load ConverteAI Script
+    useEffect(() => {
+        const script = document.createElement("script");
+        script.src = "https://scripts.converteai.net/lib/js/smartplayer-wc/v4/sdk.js";
+        script.async = true;
+        document.head.appendChild(script);
+    }, []);
     const [currentSlide, setCurrentSlide] = useState(0);
 
     const testimonialImages = [
@@ -139,15 +147,25 @@ export const SalesLanding: React.FC = () => {
                         Começe sua Jornada de 2026 com Deus e Aprofunde sua fé este ano.
                     </p>
 
-                    {/* Single Product Image - CENTERED */}
-                    <div className="max-w-md mx-auto mb-12 animate-fade-in-up animation-delay-400">
-                        <div className="relative group">
-                            <div className="absolute -inset-4 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-3xl blur-2xl opacity-50 group-hover:opacity-75 transition-opacity"></div>
-                            <img
-                                src="/images/devocional-cover.jpg"
-                                alt="Capa do Devocional"
-                                className="relative rounded-3xl shadow-2xl w-full transform hover:scale-105 transition-transform duration-500"
-                            />
+                    {/* Video Embed - CENTERED */}
+                    <div className="max-w-md mx-auto mb-12 animate-fade-in-up animation-delay-400 relative z-20">
+                        <div id="ifr_6958117b6378e3737a0e7c29_wrapper" style={{ margin: "0 auto", width: "100%", maxWidth: "400px" }}>
+                            <div style={{ position: "relative", padding: "216.66666666666666% 0 0 0" }} id="ifr_6958117b6378e3737a0e7c29_aspect">
+                                <iframe
+                                    frameBorder="0"
+                                    allowFullScreen
+                                    src="about:blank"
+                                    id="ifr_6958117b6378e3737a0e7c29"
+                                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
+                                    referrerPolicy="origin"
+                                    onLoad={(e) => {
+                                        const iframe = e.target as HTMLIFrameElement;
+                                        if (iframe.src === "about:blank") {
+                                            iframe.src = 'https://scripts.converteai.net/23a12c68-c1f4-4484-8d24-176d22e3e1c7/players/6958117b6378e3737a0e7c29/v4/embed.html' + (window.location.search || '?') + '&vl=' + encodeURIComponent(window.location.href);
+                                        }
+                                    }}
+                                ></iframe>
+                            </div>
                         </div>
                     </div>
 
