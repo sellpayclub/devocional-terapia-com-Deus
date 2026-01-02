@@ -377,7 +377,7 @@ export const SalesLanding: React.FC = () => {
                                 </ul>
 
                                 <a
-                                    href="https://pay.lowify.com.br/go.php?offer=k7y5v1g"
+                                    href="https://payt.site/LmCayV5"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="block w-full bg-gradient-to-r from-amber-900 to-orange-800 text-white text-center py-5 rounded-full font-bold text-xl hover:from-amber-800 hover:to-orange-700 transition-all shadow-xl hover:shadow-2xl transform hover:scale-105"
@@ -422,7 +422,7 @@ export const SalesLanding: React.FC = () => {
                                 </ul>
 
                                 <a
-                                    href="https://pay.lowify.com.br/go.php?offer=kcl2y7a"
+                                    href="https://payt.site/N1CqVMp"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="block w-full bg-amber-900 text-yellow-100 text-center py-5 rounded-full font-bold text-xl hover:bg-amber-800 transition-all shadow-xl hover:shadow-2xl transform hover:scale-105"
@@ -513,7 +513,7 @@ export const SalesLanding: React.FC = () => {
 
                     <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                         <a
-                            href="https://pay.lowify.com.br/go.php?offer=k7y5v1g"
+                            href="https://payt.site/LmCayV5"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="bg-white text-amber-900 px-10 py-5 rounded-full font-bold text-xl hover:bg-yellow-50 transition-all shadow-2xl hover:shadow-yellow-400/50 transform hover:scale-110"
@@ -521,7 +521,7 @@ export const SalesLanding: React.FC = () => {
                             Plano Padrão - R$ 9,90
                         </a>
                         <a
-                            href="https://pay.lowify.com.br/go.php?offer=kcl2y7a"
+                            href="https://payt.site/N1CqVMp"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="bg-gradient-to-r from-yellow-400 to-amber-400 text-amber-900 px-10 py-5 rounded-full font-bold text-xl hover:from-yellow-300 hover:to-amber-300 transition-all shadow-2xl hover:shadow-yellow-400/50 transform hover:scale-110 animate-pulse"
